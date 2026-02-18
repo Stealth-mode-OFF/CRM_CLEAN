@@ -36,3 +36,11 @@
 ## Docs
 - [x] Update README with setup/run/test instructions
 - [x] Record ADR-lite entries in DECISIONS.md
+
+## Post-MVP (from Claude Copilot review)
+- [ ] Add `BOT_USER_ID` env var and `meta.user_id` check in `processWebhookEventJob` (ADR-014)
+- [ ] Fix `convertToDeal` endpoint order — try `/api/v2/leads/{id}/convert` first, drop `/convert/deal`
+- [ ] Add `meta.is_bulk_update` skip logic in webhook processing
+- [ ] Implement merge execution in `mergeReviewJob` following ADR-013 acceptance rules
+- [ ] Add lead sweep to nightly cron (currently manual-only via admin endpoint)
+- [ ] Add Bull Board or similar dashboard for job queue inspection

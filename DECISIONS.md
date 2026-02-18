@@ -63,3 +63,18 @@ Architecture Decision Records (ADR-lite) for the Pipedrive CRM Autopilot project
 - **Context**: This service serves one Pipedrive account.
 - **Decision**: No multi-tenancy abstractions. One API token, one database, one worker.
 - **Rationale**: Simplest correct implementation for the current use case. Multi-tenant can be layered later if needed.
+
+### ADR-013: Merge safety policy (post-MVP)
+- **Context**: Merge operations (duplicate person/org resolution) are the highest-risk CRM automation — data loss is irreversible.
+- **Decision**: When implementing `mergeReviewJob`, enforce these acceptance rules before executing any merge:
+  1. **Confidence score** — Duplicate match must exceed configurable threshold (email exact match + org name fuzzy ≥ 0.85).
+  2. **No open deals on loser** — If the merge-target entity has open deals, route to human review instead of auto-merging.
+  3. **Activity preservation** — Verify Pipedrive merge API preserves activities/notes from both records.
+  4. **Cooldown window** — Don't merge entities created or modified in the last 24 hours (avoid merging mid-import).
+  5. **Dry-run first** — Log planned merge to `AuditLog` with full before-state of both records, hold for 1 hour or require manual `/admin/merge/:id/execute` trigger.
+- **Rationale**: Merge mistakes are unrecoverable. Multi-layer gates ensure confidence before destructive action.
+
+### ADR-014: Bot user ID for primary loop protection (post-MVP)
+- **Context**: Current loop protection relies on detecting recent `[AUTOPILOT]` notes within a 10-minute echo window. This works but involves extra API calls and has a timing assumption.
+- **Decision**: Add optional `BOT_USER_ID` env var. When set, `processWebhookEventJob` checks `meta.user_id` from the webhook payload and short-circuits immediately if it matches the bot user. The note-based echo check becomes a fallback.
+- **Rationale**: `meta.user_id` is authoritative and zero-cost to check. Eliminates the API call to list notes and removes the timing window assumption. Falls back gracefully when `BOT_USER_ID` is not configured.
