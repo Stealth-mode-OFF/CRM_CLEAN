@@ -1,0 +1,17 @@
+{
+  "name": "@autopilot/pipedrive",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@autopilot/shared": "workspace:*",
+    "bottleneck": "^2.19.5"
+  }
+}

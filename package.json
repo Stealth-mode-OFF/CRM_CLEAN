@@ -1,0 +1,26 @@
+{
+  "name": "pipedrive-crm-autopilot",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.12.3",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev:api": "pnpm --filter @autopilot/api dev",
+    "dev:worker": "pnpm --filter @autopilot/worker dev",
+    "dev": "pnpm --parallel --filter @autopilot/api --filter @autopilot/worker dev",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "prisma": "^6.3.1",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.3.1"
+  }
+}

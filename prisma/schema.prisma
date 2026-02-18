@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model FieldMap {
+  id          String   @id @default(cuid())
+  entityType  String
+  fieldKey    String
+  name        String
+  fieldType   String
+  optionsJson Json?
+  updatedAt   DateTime @updatedAt
+
+  @@unique([entityType, fieldKey])
+}
+
+model IdempotencyKey {
+  id          String   @id @default(cuid())
+  scope       String
+  key         String
+  requestHash String
+  status      String
+  createdAt   DateTime @default(now())
+
+  @@unique([scope, key])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  source     String
+  beforeJson Json?
+  afterJson  Json?
+  createdAt  DateTime @default(now())
+}
+
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  eventHash   String   @unique
+  payloadJson Json
+  status      String
+  receivedAt  DateTime @default(now())
+  processedAt DateTime?
+}
+
+model ReviewQueue {
+  id          String   @id @default(cuid())
+  type        String
+  payloadJson Json
+  status      String
+  createdAt   DateTime @default(now())
+}
+
+model JobRun {
+  id         String   @id @default(cuid())
+  jobName    String
+  startedAt  DateTime @default(now())
+  finishedAt DateTime?
+  status     String
+  statsJson  Json?
+}
