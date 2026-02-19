@@ -5,6 +5,11 @@ export type ParsedWebhook =
   | { type: "lead"; id: string; action?: string }
   | { type: "unknown"; action?: string };
 
+export type WebhookMeta = {
+  userId?: number;
+  isBulkUpdate: boolean;
+};
+
 function parseNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
@@ -18,6 +23,21 @@ function parseNumber(value: unknown): number | null {
   }
 
   return null;
+}
+
+export function parseWebhookMeta(payload: unknown): WebhookMeta {
+  if (!payload || typeof payload !== "object") {
+    return { isBulkUpdate: false };
+  }
+
+  const value = payload as Record<string, unknown>;
+  const meta = (value.meta as Record<string, unknown> | undefined) ?? {};
+  const userId = parseNumber(meta.user_id);
+
+  return {
+    userId: userId ?? undefined,
+    isBulkUpdate: meta.is_bulk_update === true
+  };
 }
 
 export function parseWebhookPayload(payload: unknown): ParsedWebhook {

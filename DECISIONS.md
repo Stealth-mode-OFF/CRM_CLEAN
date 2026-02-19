@@ -78,3 +78,25 @@ Architecture Decision Records (ADR-lite) for the Pipedrive CRM Autopilot project
 - **Context**: Current loop protection relies on detecting recent `[AUTOPILOT]` notes within a 10-minute echo window. This works but involves extra API calls and has a timing assumption.
 - **Decision**: Add optional `BOT_USER_ID` env var. When set, `processWebhookEventJob` checks `meta.user_id` from the webhook payload and short-circuits immediately if it matches the bot user. The note-based echo check becomes a fallback.
 - **Rationale**: `meta.user_id` is authoritative and zero-cost to check. Eliminates the API call to list notes and removes the timing window assumption. Falls back gracefully when `BOT_USER_ID` is not configured.
+
+## 2026-02-19
+
+### ADR-015: Dashboard backend-first rollout
+- **Context**: `CODEX_PROMPT.md` requires a large dashboard feature set, but this repository currently contains API/worker/shared packages only.
+- **Decision**: Implement all requested dashboard backend capabilities (`velocity`, `cadence`, `briefing`, `leads`, `analytics`, quick actions) and expose data contracts for UI, while marking frontend rendering tasks as blocked in `TODO.md`.
+- **Rationale**: Preserves delivery momentum without inventing an unsupported frontend package in this codebase.
+
+### ADR-016: 60-second in-memory cache for dashboard endpoints
+- **Context**: Dashboard routes aggregate multiple Pipedrive reads and are requested frequently.
+- **Decision**: Add API-local in-memory cache (`Map`) with 60s TTL and `Cache-Control: max-age=60` headers for dashboard endpoints.
+- **Rationale**: Reduces Pipedrive load and response latency with minimal operational complexity.
+
+### ADR-017: Merge execution verification by artifact counts
+- **Context**: ADR-013 requires activity/note preservation checks during merge execution.
+- **Decision**: Before merge, capture source+target activity/note counts; after merge, verify target counts are not lower than the pre-merge sum. Reject execution if check fails.
+- **Rationale**: Provides deterministic safety validation using currently available API surfaces without requiring event-history reconstruction.
+
+### ADR-018: Nightly lead sweep as first-class job
+- **Context**: Lead sweep existed only as manual helper mode and not as named scheduled work.
+- **Decision**: Add `leadSweep` to shared job names, schedule it nightly via `LEAD_SWEEP_CRON`, and persist run stats in `JobRun`.
+- **Rationale**: Improves observability, explicitness, and operational parity with SLA sweep.

@@ -5,6 +5,8 @@ export const JOB_NAMES = {
   slaDealEnforce: "slaDealEnforce",
   leadTriageEnforce: "leadTriageEnforce",
   slaSweep: "slaSweep",
+  leadSweep: "leadSweep",
+  staleDealNudge: "staleDealNudge",
   mergeReview: "mergeReview"
 } as const;
 

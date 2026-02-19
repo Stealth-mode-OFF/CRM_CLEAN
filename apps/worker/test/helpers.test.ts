@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   parseWebhookPayload,
+  parseWebhookMeta,
   stageAllowed,
   asPersonOrOrgId,
   hasAutopilotPrefix
@@ -43,6 +44,23 @@ describe("parseWebhookPayload", () => {
       current: { id: "99" }
     });
     expect(result).toEqual({ type: "deal", id: 99, action: "" });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseWebhookMeta
+// ---------------------------------------------------------------------------
+describe("parseWebhookMeta", () => {
+  it("extracts user id and bulk flag", () => {
+    const result = parseWebhookMeta({
+      meta: { user_id: 77, is_bulk_update: true }
+    });
+
+    expect(result).toEqual({ userId: 77, isBulkUpdate: true });
+  });
+
+  it("returns defaults for missing meta", () => {
+    expect(parseWebhookMeta({})).toEqual({ userId: undefined, isBulkUpdate: false });
   });
 });
 

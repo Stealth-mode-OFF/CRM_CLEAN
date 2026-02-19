@@ -38,9 +38,22 @@
 - [x] Record ADR-lite entries in DECISIONS.md
 
 ## Post-MVP (from Claude Copilot review)
-- [ ] Add `BOT_USER_ID` env var and `meta.user_id` check in `processWebhookEventJob` (ADR-014)
-- [ ] Fix `convertToDeal` endpoint order — try `/api/v2/leads/{id}/convert` first, drop `/convert/deal`
-- [ ] Add `meta.is_bulk_update` skip logic in webhook processing
-- [ ] Implement merge execution in `mergeReviewJob` following ADR-013 acceptance rules
-- [ ] Add lead sweep to nightly cron (currently manual-only via admin endpoint)
+- [x] Add `BOT_USER_ID` env var and `meta.user_id` check in `processWebhookEventJob` (ADR-014)
+- [x] Fix `convertToDeal` endpoint order — try `/api/v2/leads/{id}/convert` first, then fallback
+- [x] Add `meta.is_bulk_update` skip logic in webhook processing
+- [x] Implement merge execution in `mergeReviewJob` following ADR-013 acceptance rules
+- [x] Add lead sweep to nightly cron
 - [ ] Add Bull Board or similar dashboard for job queue inspection
+
+## CODEX_PROMPT.md execution (2026-02-19)
+- [x] Extend env surface (`BOT_USER_ID`, merge threshold, cadence thresholds, company domain, lead sweep cron)
+- [x] Add shared utilities: `scoreLead` + `buildPipedriveUrl`
+- [x] Add Prisma models + migration: `MergeCandidate`, `DealSnapshot`
+- [x] Implement nightly lead sweep worker job (`leadSweep`) and deal snapshots in `slaSweep`
+- [x] Implement stale-deal nudge flow with idempotency + audit + dry-run behavior
+- [x] Implement merge review safety gates and manual execute endpoint (`POST /admin/merge/:id/execute`)
+- [x] Add dashboard backend endpoints (`velocity`, `cadence`, `briefing`, `leads`, `analytics`)
+- [x] Add dashboard quick-action endpoints (`add-activity`, `add-note`, `snooze`)
+- [x] Add API 60s in-memory caching + `Cache-Control: max-age=60` on dashboard endpoints
+- [x] Extend `/health` with subsystem checks + queue depth
+- [ ] Frontend dashboard UX tasks (components, shortcuts, responsive polish, error boundaries) — blocked in this repo (frontend app not present)

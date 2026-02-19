@@ -81,6 +81,15 @@ class InMemoryPrisma {
     update: async () => null
   };
 
+  mergeCandidate = {
+    findUnique: async () => null,
+    update: async () => null
+  };
+
+  dealSnapshot = {
+    create: async () => null
+  };
+
   fieldMap = {
     upsert: async () => null
   };
@@ -89,6 +98,8 @@ class InMemoryPrisma {
     create: async () => ({ id: "jr-1" }),
     update: async () => null
   };
+
+  $queryRaw = async () => [{ ok: 1 }];
 }
 
 function createFakePipedrive() {
@@ -133,6 +144,10 @@ describe("webhook integration dry-run", () => {
     defaultTimezone: "UTC",
     slaFutureActivityDays: 3,
     staleDays: 7,
+    mergeConfidenceThreshold: 0.85,
+    cadenceColdDays: 7,
+    cadenceCoolingDays: 3,
+    leadSweepCron: "0 5 * * *",
     activeStageIds: [1]
   };
 
@@ -156,7 +171,8 @@ describe("webhook integration dry-run", () => {
             data.eventHash
           );
         }
-      }
+      },
+      getJobCounts: async () => ({ waiting: 0, active: 0, delayed: 0, failed: 0 })
     };
 
     const app = await createServer({

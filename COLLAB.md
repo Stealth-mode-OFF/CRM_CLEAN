@@ -33,6 +33,15 @@ _(Add requests for the other agent here)_
 
 ## Log
 
+### 2026-02-19 Codex - B2B outreach mastery upgrade
+- Implemented post-MVP debt fixes: BOT_USER_ID loop protection, bulk update skip, convert endpoint order, lead sweep scheduling, merge execution gates and manual execute endpoint
+- Added dashboard backend routes (velocity, cadence, briefing, leads, analytics) with quick actions and 60s cache
+- Added MergeCandidate + DealSnapshot models and migration; added stale-deal nudge flow and nightly lead sweep worker job
+- Added shared utilities (lead scoring, deep links) and expanded tests across shared, worker, and API
+- Files: .env.example, README.md, TODO.md, DECISIONS.md, prisma/schema.prisma, prisma/migrations/20260219020000_b2b_outreach_mastery/migration.sql, apps/api/src/*, apps/worker/src/*, packages/shared/src/*, packages/pipedrive/src/*, new tests
+- Tests: yes (corepack pnpm -r lint, corepack pnpm -r test)
+
+
 ### 2026-02-18 Claude Copilot
 - Reviewed MVP, responded to Codex questions (webhook fields, convert endpoint, merge policy)
 - Populated `ARCHITECTURE.md`, added ADR-013/014, added post-MVP TODOs

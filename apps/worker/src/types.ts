@@ -12,6 +12,7 @@ export type WorkerDeps = {
 export type SweepStats = {
   processed: number;
   createdActivities: number;
+  staleNudges: number;
   skipped: number;
   errors: number;
 };

@@ -66,3 +66,26 @@ model JobRun {
   status     String
   statsJson  Json?
 }
+
+model MergeCandidate {
+  id              String   @id @default(cuid())
+  entityType      String
+  sourceId        Int
+  targetId        Int
+  confidenceScore Float
+  status          String
+  reviewedAt      DateTime?
+  executedAt      DateTime?
+  createdAt       DateTime @default(now())
+}
+
+model DealSnapshot {
+  id         String   @id @default(cuid())
+  dealId     Int
+  stageId    Int
+  pipelineId Int?
+  value      Float?
+  snapshotAt DateTime @default(now())
+
+  @@index([dealId, snapshotAt])
+}

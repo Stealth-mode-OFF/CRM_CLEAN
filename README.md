@@ -1,9 +1,10 @@
-# Pipedrive CRM Autopilot (Single-Tenant MVP)
+# Pipedrive CRM Autopilot (Single-Tenant)
 
-Internal automation service for Pipedrive hygiene and actionability:
+Internal automation service for Pipedrive hygiene, follow-up control, and B2B outreach prioritization:
 - Lead triage autopilot (Leads)
-- Deal SLA autopilot (Deals)
-- Field map refresh + review queue endpoints
+- Deal SLA + stale-deal nudge autopilot (Deals)
+- Merge review pipeline with manual execute endpoint
+- Dashboard backend endpoints (velocity, cadence, briefing, analytics, scored leads)
 - Audit logging, idempotency, dry-run safety
 
 ## Stack
@@ -18,7 +19,7 @@ Internal automation service for Pipedrive hygiene and actionability:
 - `apps/api` Fastify webhook/admin API
 - `apps/worker` BullMQ job processor
 - `packages/pipedrive` API client + retry/limiter/pagination helpers
-- `packages/shared` env, logger, hash/idempotency/time/queue utilities
+- `packages/shared` env, logger, hash/idempotency/time/queue/scoring/deep-link utilities
 - `prisma` schema + migration
 - `infra` docker-compose for Redis/Postgres
 
@@ -54,16 +55,35 @@ corepack pnpm dev:worker
 - `DEFAULT_TIMEZONE=UTC`
 - `SLA_FUTURE_ACTIVITY_DAYS=3`
 - `STALE_DAYS=7`
+- `BOT_USER_ID` (optional)
+- `MERGE_CONFIDENCE_THRESHOLD=0.85`
+- `PIPEDRIVE_COMPANY_DOMAIN` (optional)
+- `CADENCE_COLD_DAYS=7`
+- `CADENCE_COOLING_DAYS=3`
+- `LEAD_SWEEP_CRON="0 5 * * *"`
 - `PIPELINE_ID` (optional)
 - `ACTIVE_STAGE_IDS` (optional comma-separated)
 
 ## API endpoints
+
+### Webhooks and admin
 - `POST /webhooks/pipedrive`
 - `POST /admin/fieldmap/refresh`
 - `GET /admin/review-queue`
 - `POST /admin/review-queue/:id/approve`
-- `POST /admin/jobs/run/:name` (`slaSweep` supported; `leadSweep` helper mode)
+- `POST /admin/merge/:id/execute`
+- `POST /admin/jobs/run/:name` (`slaSweep`, `leadSweep`, `staleDealNudge`)
 - `GET /health`
+
+### Dashboard backend
+- `GET /admin/dashboard/velocity`
+- `GET /admin/dashboard/cadence`
+- `GET /admin/dashboard/briefing`
+- `GET /admin/dashboard/leads`
+- `GET /admin/dashboard/analytics`
+- `POST /admin/dashboard/quick-action/add-activity`
+- `POST /admin/dashboard/quick-action/add-note`
+- `POST /admin/dashboard/quick-action/snooze`
 
 ### Webhook auth
 Header must match:
@@ -79,10 +99,13 @@ curl -X POST http://localhost:3000/webhooks/pipedrive \
 
 ## Behavior highlights
 - Idempotent webhook ingestion via payload hash (`WebhookEvent.eventHash`).
+- Primary loop protection via `BOT_USER_ID` (`meta.user_id`), fallback via `[AUTOPILOT]` echo check.
+- Bulk update skip via `meta.is_bulk_update`.
 - Job idempotency via `IdempotencyKey` scoped per entity/day.
-- SLA enforcement for open deals: if no future activity, create follow-up (+2 business days) and explanatory note.
-- Lead triage enforcement: create qualification action when key signals are missing or near-term qualification activity is absent.
-- Loop protection via `[AUTOPILOT]` fingerprint + recent-touch echo short-circuit.
+- Nightly SLA sweep + nightly lead sweep.
+- Stale-deal nudges (7-day cooloff for repeated nudge notes).
+- Merge review enforces ADR-013 safety gates and manual execution path.
+- Dashboard endpoints are cached in-memory for 60 seconds (`Cache-Control: max-age=60`).
 - `DRY_RUN=true` prevents remote mutation and logs planned actions to `AuditLog`.
 
 ## Tests
@@ -92,5 +115,6 @@ corepack pnpm -r test
 ```
 
 Included:
-- Unit tests for business-day math, hashing determinism, and future-activity checks.
-- Integration test: webhook -> queue dispatch -> SLA enforcement in dry-run.
+- Unit tests for business-day math, hashing determinism, deep links, scoring, and webhook helpers.
+- Worker tests for BOT_USER_ID and bulk-update loop protection paths.
+- API integration tests for webhook dispatch and dashboard endpoint payloads.

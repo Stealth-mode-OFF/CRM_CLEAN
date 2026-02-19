@@ -159,6 +159,25 @@ export class PipedriveClient {
     return (await response.json()) as PipedriveEnvelope<T>;
   }
 
+  private async requestFirstSupported<T>(
+    method: HttpMethod,
+    paths: string[],
+    options: RequestOptions = {}
+  ): Promise<T> {
+    for (const path of paths) {
+      try {
+        return await this.request<T>(method, path, options);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!message.includes("status=404")) {
+          throw error;
+        }
+      }
+    }
+
+    throw new Error(`No supported endpoint for ${method} among ${paths.join(", ")}`);
+  }
+
   private enforceDailyMutationBudget(method: HttpMethod, path: string): void {
     if (method === "GET") {
       return;
@@ -175,7 +194,8 @@ export class PipedriveClient {
   }
 
   leads = {
-    list: async () => this.paginateV2<PipedriveLead>("/api/v2/leads"),
+    list: async (query: Record<string, string | number | boolean | undefined> = {}) =>
+      this.paginateV2<PipedriveLead>("/api/v2/leads", query),
     search: async (term: string) =>
       this.paginateV2<PipedriveLead>("/api/v2/leads/search", {
         term,
@@ -185,21 +205,8 @@ export class PipedriveClient {
     update: async (id: string, body: Record<string, unknown>) =>
       this.request<PipedriveLead>("PATCH", `/api/v2/leads/${id}`, { body }),
     convertToDeal: async (id: string) => {
-      const candidates = [
-        `/api/v2/leads/${id}/convert/deal`,
-        `/api/v2/leads/${id}/convert`
-      ];
-      for (const path of candidates) {
-        try {
-          return await this.request<Record<string, unknown>>("POST", path, {});
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          if (!message.includes("status=404")) {
-            throw error;
-          }
-        }
-      }
-      throw new Error(`Unable to convert lead ${id}; no supported endpoint found`);
+      const candidates = [`/api/v2/leads/${id}/convert`, `/api/v2/leads/${id}/convert/deal`];
+      return this.requestFirstSupported<Record<string, unknown>>("POST", candidates);
     }
   };
 
@@ -232,7 +239,13 @@ export class PipedriveClient {
       }),
     get: async (id: number) => this.request<PipedrivePerson>("GET", `/v1/persons/${id}`),
     update: async (id: number, body: Record<string, unknown>) =>
-      this.request<PipedrivePerson>("PUT", `/v1/persons/${id}`, { body })
+      this.request<PipedrivePerson>("PUT", `/v1/persons/${id}`, { body }),
+    merge: async (sourceId: number, targetId: number) =>
+      this.requestFirstSupported<PipedrivePerson>(
+        "POST",
+        [`/v1/persons/${sourceId}/merge`, `/v1/persons/${sourceId}/merge/${targetId}`],
+        { body: { merge_with_id: targetId } }
+      )
   };
 
   orgs = {
@@ -242,7 +255,13 @@ export class PipedriveClient {
       }),
     get: async (id: number) => this.request<PipedriveOrg>("GET", `/v1/organizations/${id}`),
     update: async (id: number, body: Record<string, unknown>) =>
-      this.request<PipedriveOrg>("PUT", `/v1/organizations/${id}`, { body })
+      this.request<PipedriveOrg>("PUT", `/v1/organizations/${id}`, { body }),
+    merge: async (sourceId: number, targetId: number) =>
+      this.requestFirstSupported<PipedriveOrg>(
+        "POST",
+        [`/v1/organizations/${sourceId}/merge`, `/v1/organizations/${sourceId}/merge/${targetId}`],
+        { body: { merge_with_id: targetId } }
+      )
   };
 
   webhooks = {

@@ -4,3 +4,5 @@ export * from "./idempotency.js";
 export * from "./logger.js";
 export * from "./queue.js";
 export * from "./time.js";
+export * from "./scoring.js";
+export * from "./deep-link.js";
